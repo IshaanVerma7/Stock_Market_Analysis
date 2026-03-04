@@ -1,0 +1,95 @@
+CREATE DATABASE StockMarketDB;
+USE StockMarketDB;
+drop table if exists stockprices;
+DROP TABLE IF EXISTS StockPrices_Temp;
+CREATE TABLE StockPrices_Temp (
+    Date VARCHAR(50),
+    Open DECIMAL(10,2),
+    High DECIMAL(10,2),
+    Low DECIMAL(10,2),
+    Close DECIMAL(10,2),
+    Adj_Close DECIMAL(10,2),
+    Volume BIGINT
+);
+ ALTER TABLE StockPrices_Temp
+ADD COLUMN Ticker VARCHAR(10),
+ADD COLUMN Sector VARCHAR(50);
+
+-- Highlight BOTH lines and click the Lightning Bolt (not the one with the cursor)
+SET SQL_SAFE_UPDATES = 0;
+DELETE FROM StockPrices_Temp WHERE `Close` IS NULL;
+-- Daily price Movement 
+SELECT 
+    `Date`, 
+    `High`, 
+    `Low`, 
+    (`High` - `Low`) AS Daily_Range,
+    ((`High` - `Low`) / `Open`) * 100 AS Volatility_Pct
+FROM StockPrices_Temp
+ORDER BY Volatility_Pct DESC
+LIMIT 5;
+
+-- 5-Days Moving Average
+SELECT 
+    `Date`, 
+    `Close`,
+    AVG(`Close`) OVER (ORDER BY `Date` ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) AS 5_Day_Moving_Avg
+FROM StockPrices_Temp;
+
+-- Volume Analysis
+SELECT `Date`, `Volume`, `Close`
+FROM StockPrices_Temp
+ORDER BY `Volume` DESC
+LIMIT 5;
+
+SELECT 
+    ticker,
+    date,
+    close,
+    -- Daily Volatility: Current High minus Current Low
+    (high - low) AS daily_range,
+    -- Momentum Shift: Current Close vs Previous Day's Close
+    (close - LAG(close, 1) OVER (PARTITION BY ticker ORDER BY date)) AS price_change,
+    -- Momentum Percentage: To see the relative shift
+    ROUND(((close - LAG(close, 1) OVER (PARTITION BY ticker ORDER BY date)) / 
+           NULLIF(LAG(close, 1) OVER (PARTITION BY ticker ORDER BY date), 0)) * 100, 2) AS momentum_pct
+FROM stockprices_temp;
+
+SELECT 
+    ticker,
+    date,
+    close,
+    -- 7-Day Simple Moving Average (SMA)
+    AVG(close) OVER (PARTITION BY ticker ORDER BY date 
+                     ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS sma_7,
+    -- 30-Day Simple Moving Average (SMA)
+    AVG(close) OVER (PARTITION BY ticker ORDER BY date 
+                     ROWS BETWEEN 29 PRECEDING AND CURRENT ROW) AS sma_30,
+    -- Signal: Simple logic to identify a 'Bullish' trend (7-day above 30-day)
+    CASE 
+        WHEN AVG(close) OVER (PARTITION BY ticker ORDER BY date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) > 
+             AVG(close) OVER (PARTITION BY ticker ORDER BY date ROWS BETWEEN 29 PRECEDING AND CURRENT ROW) 
+        THEN 'Bullish' ELSE 'Bearish' 
+    END AS trend_signal
+FROM stockprices_Temp;
+
+WITH sector_averages AS (
+    SELECT 
+        ticker,
+        sector,
+        date,
+        close,
+        -- Calculate the average closing price for the entire sector on that day
+        AVG(close) OVER (PARTITION BY sector, date) AS sector_avg_close
+    FROM stockprices_Temp
+)
+SELECT 
+    ticker,
+    sector,
+    date,
+    close,
+    sector_avg_close,
+    -- Performance Ratio: Ticker Close / Sector Average
+    ROUND(close / NULLIF(sector_avg_close, 0), 4) AS relative_performance
+FROM sector_averages
+ORDER BY sector, date, ticker;
