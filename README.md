@@ -1,7 +1,7 @@
 # Stock_Market_Analysis
 
 ## 📌 Project Overview
-An end-to-end SQL-based analysis of stock market trends using historical data from Yahoo Finance. This project demonstrates advanced analytical techniques including **window functions**, **moving averages**, and **volatility modeling** to extract actionable market insights.
+An end-to-end SQL-based analysis of stock market trends using historical data from Kaggle. This project demonstrates advanced analytical techniques including **window functions**, **moving averages**, and **volatility modeling** to extract actionable market insights.
 
 ## 🛠️ Tech Stack
 * **Database:** PostgreSQL / MySQL (Select yours)
