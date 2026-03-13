@@ -15,7 +15,6 @@ CREATE TABLE StockPrices_Temp (
 ADD COLUMN Ticker VARCHAR(10),
 ADD COLUMN Sector VARCHAR(50);
 
--- Highlight BOTH lines and click the Lightning Bolt (not the one with the cursor)
 SET SQL_SAFE_UPDATES = 0;
 DELETE FROM StockPrices_Temp WHERE `Close` IS NULL;
 -- Daily price Movement 
