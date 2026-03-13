@@ -32,7 +32,14 @@ LIMIT 5;
 SELECT 
     `Date`, 
     `Close`,
-    AVG(`Close`) OVER (ORDER BY `Date` ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) AS 5_Day_Moving_Avg
+    AVG(`Close`) OVER (ORDER BY `Date` ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS 7_Day_Moving_Avg
+FROM StockPrices_Temp;
+
+-- 30 days moving Average
+SELECT 
+    `Date`, 
+    `Close`,
+    AVG(`Close`) OVER (ORDER BY `Date` ROWS BETWEEN 29 PRECEDING AND CURRENT ROW) AS 30_Day_Moving_Avg
 FROM StockPrices_Temp;
 
 -- Volume Analysis
